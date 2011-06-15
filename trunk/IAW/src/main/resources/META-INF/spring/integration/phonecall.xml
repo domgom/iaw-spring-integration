@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:stream="http://www.springframework.org/schema/integration/stream"
+	xmlns:file="http://www.springframework.org/schema/integration/file"
+	xmlns:mail="http://www.springframework.org/schema/integration/mail"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+			http://www.springframework.org/schema/beans/spring-beans.xsd
+			http://www.springframework.org/schema/integration
+			http://www.springframework.org/schema/integration/spring-integration.xsd
+			http://www.springframework.org/schema/integration/stream
+			http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd
+			http://www.springframework.org/schema/integration/file
+			http://www.springframework.org/schema/integration/file/spring-integration-file.xsd
+			http://www.springframework.org/schema/integration/mail
+            http://www.springframework.org/schema/integration/mail/spring-integration-mail-2.0.xsd">
+
+	<beans:bean id="logSource"
+		class="org.springframework.integration.stream.ByteStreamReadingMessageSource">
+		<beans:constructor-arg ref="streamSource" />
+	</beans:bean>
+
+	<beans:bean id="streamSource" class="java.io.FileInputStream">
+		<beans:constructor-arg type="java.lang.String"
+			value="c:/callcenter.txt" />
+	</beans:bean>
+
+	<beans:bean class="iaw.pc.runtime.CallRecordsTransformer"
+		id="callRecordsTransformer" />
+	<beans:bean id="HRSTransformer" class="iaw.pc.runtime.HRSTransformer" />
+
+	<beans:bean id="HRSactivator" class="iaw.pc.runtime.HRSServiceActivator" />
+
+	<beans:bean id="HRSAggregator" class="iaw.pc.runtime.HRSAggregator" />
+
+	<beans:bean id="payrollSender" class="iaw.pc.runtime.Payroll" />
+
+	<beans:bean id="smsSender" class="iaw.pc.runtime.Sms" />
+
+	<beans:bean id="mailSender" class="iaw.pc.runtime.MailSender" />
+
+	<int:logging-channel-adapter
+		log-full-message="true" id="logger" level="INFO" />
+	<int:message-history />
+
+	<int:inbound-channel-adapter id="logReader"
+		channel="channel1" ref="logSource">
+		<int:poller fixed-rate="1000" max-messages-per-poll="100" />
+	</int:inbound-channel-adapter>
+
+	<int:outbound-channel-adapter channel="channel41"
+		method="pay" ref="payrollSender" id="payrollGateway">
+	</int:outbound-channel-adapter>
+
+
+	<int:outbound-channel-adapter channel="channel22"
+		method="send" ref="mailSender" id="mailGateway">
+	</int:outbound-channel-adapter>
+
+	<int:outbound-channel-adapter channel="channel32"
+		method="send" ref="smsSender" id="smsGateway">
+	</int:outbound-channel-adapter>
+
+
+</beans:beans>

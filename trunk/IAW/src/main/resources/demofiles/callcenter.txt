@@ -1,0 +1,4 @@
+EmployeeId: 1 Number: 955862040 Terminal: 955000001 City: Sevilla Cost: 10.4 Duration: 32
+EmployeeId: 1 Number: 900100100 Terminal: 955000001 City: Madrid Cost: 13.1 Duration: 37
+EmployeeId: 1 Number: 954893910 Terminal: 955000001 City: Sevilla Cost: 26.4 Duration: 91
+EmployeeId: 2 Number: 956462037 Terminal: 955000002 City: Sevilla Cost: 41.7 Duration: 128
