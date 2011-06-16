@@ -48,7 +48,10 @@ public class HRSAggregator {
 	}
 
 	private Caller transformEmployeeResponseToCaller(EmployeeResponse employeeResponse, Caller caller) {
-		//TODO
+		caller.setName(employeeResponse.getName());
+		caller.setEmail(employeeResponse.getEmail());
+		caller.setPhone(employeeResponse.getPhone());
+		caller.setDepartment(employeeResponse.getDepartment());
 		return caller;
 	}
 }
