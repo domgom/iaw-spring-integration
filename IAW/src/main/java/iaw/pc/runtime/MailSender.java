@@ -14,8 +14,8 @@ import javax.mail.internet.MimeMessage;
 public class MailSender {
 	private static final String SMTP_HOST_NAME = "smtp.gmail.com";
 	private static final int SMTP_HOST_PORT = 465;
-	private static final String SMTP_AUTH_USER = "-";//TODO
-	private static final String SMTP_AUTH_PWD = "-";//TODO
+	private static final String SMTP_AUTH_USER = "contactobxip@gmail.com";
+	private static final String SMTP_AUTH_PWD = "accmaccm";
 
 	public void send(Mail mail) {
 		System.err.println("MAIL GATEWAY ");

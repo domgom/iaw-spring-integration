@@ -8,6 +8,10 @@ public class CallSystemApp {
 	private static Logger logger = Logger.getLogger(CallSystemApp.class);
 
 	public static void main(String[] args) {
-		//TODO
+		AbstractApplicationContext context = new ClassPathXmlApplicationContext(
+				"/META-INF/spring/integration/phonecall.xml",
+				CallSystemApp.class);
+
+		context.start();
 	}
 }

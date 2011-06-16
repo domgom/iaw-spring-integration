@@ -10,7 +10,10 @@ public class HRSTransformer {
 
 	@Transformer
 	public EmployeeRequest transform(PhoneCall message){
-		//TODO
-		return null;
+		String employeeId = message.getCaller().getEmployeeId();
+		if(employeeId==null){
+			throw new NullPointerException("EmployeeId is null");
+		}
+		return new EmployeeRequest(employeeId);
 	}
 }

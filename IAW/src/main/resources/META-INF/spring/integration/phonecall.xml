@@ -16,6 +16,11 @@
 			http://www.springframework.org/schema/integration/mail
             http://www.springframework.org/schema/integration/mail/spring-integration-mail-2.0.xsd">
 
+
+	<int:logging-channel-adapter
+		log-full-message="true" id="logger" level="INFO" />
+	<int:message-history />
+
 	<beans:bean id="logSource"
 		class="org.springframework.integration.stream.ByteStreamReadingMessageSource">
 		<beans:constructor-arg ref="streamSource" />
@@ -26,40 +31,217 @@
 			value="c:/callcenter.txt" />
 	</beans:bean>
 
-	<beans:bean class="iaw.pc.runtime.CallRecordsTransformer"
-		id="callRecordsTransformer" />
-	<beans:bean id="HRSTransformer" class="iaw.pc.runtime.HRSTransformer" />
-
-	<beans:bean id="HRSactivator" class="iaw.pc.runtime.HRSServiceActivator" />
-
-	<beans:bean id="HRSAggregator" class="iaw.pc.runtime.HRSAggregator" />
-
-	<beans:bean id="payrollSender" class="iaw.pc.runtime.Payroll" />
-
-	<beans:bean id="smsSender" class="iaw.pc.runtime.Sms" />
-
-	<beans:bean id="mailSender" class="iaw.pc.runtime.MailSender" />
-
-	<int:logging-channel-adapter
-		log-full-message="true" id="logger" level="INFO" />
-	<int:message-history />
-
 	<int:inbound-channel-adapter id="logReader"
 		channel="channel1" ref="logSource">
 		<int:poller fixed-rate="1000" max-messages-per-poll="100" />
 	</int:inbound-channel-adapter>
 
-	<int:outbound-channel-adapter channel="channel41"
-		method="pay" ref="payrollSender" id="payrollGateway">
+	<int:channel id="channel1">
+		<int:interceptors>
+			
+		</int:interceptors>
+	</int:channel>
+
+	<int:transformer id="logToCallTransformer"
+		input-channel="channel1" method="transform" output-channel="channel2"
+		ref="callRecordsTransformer" />
+
+	<beans:bean class="iaw.pc.runtime.CallRecordsTransformer"
+		id="callRecordsTransformer" />
+
+	
+
+	<int:splitter id="phoneCallSplitter" input-channel="channel2"
+		output-channel="channel3" expression="payload.callRecords">
+	</int:splitter>
+	
+	
+	<int:channel id="channel2">
+		<int:interceptors>
+		</int:interceptors>
+	</int:channel>
+	
+	
+	<int:channel id="channel3">
+	<int:interceptors>
+		
+	
+	
+	</int:interceptors>
+	</int:channel>
+
+
+
+	<int:filter id="freeTollCalls" output-channel="channel4"
+		expression="!payload.destination.number.startsWith('900')"
+		input-channel="channel3" />
+
+
+	<int:channel id="channel4">
+	<int:interceptors>
+		
+	
+	</int:interceptors>
+	</int:channel>
+
+	<int:recipient-list-router input-channel="channel8"
+		apply-sequence="true" timeout="10000">
+		<int:recipient channel="toHRS" />
+		<int:recipient channel="channel10" />
+		
+		
+	</int:recipient-list-router>
+
+
+	<int:channel id="toHRS"></int:channel>
+
+	<int:transformer id="transformerHRS" method="transform"
+		input-channel="toHRS" output-channel="channel7" ref="HRSTransformer">
+	</int:transformer>
+
+	<beans:bean id="HRSTransformer" class="iaw.pc.runtime.HRSTransformer" />
+
+
+
+	<int:channel id="channel7">
+	</int:channel>
+
+	<int:channel id="channel8">
+		<int:interceptors>
+			
+		</int:interceptors>
+	</int:channel>
+
+
+	<int:service-activator id="HRSServiceActivator"
+		input-channel="channel7" output-channel="channel10" method="queryHRS"
+		ref="HRSactivator">
+	</int:service-activator>
+	<beans:bean id="HRSactivator" class="iaw.pc.runtime.HRSServiceActivator" />
+
+
+	<int:splitter expression="payload" id="fakeSplitter"
+		input-channel="channel4" output-channel="channel8">
+	</int:splitter>
+
+	<int:aggregator input-channel="channel10" id="correlator"
+		output-channel="channel11" correlation-strategy-expression="headers.correlationId"
+		ref="HRSAggregator">
+	</int:aggregator>
+
+	<beans:bean id="HRSAggregator" class="iaw.pc.runtime.HRSAggregator" />
+
+	<int:channel id="channel10">
+		<int:interceptors>
+			
+		
+		
+		</int:interceptors>
+	</int:channel>
+	<int:channel id="channel11">
+		<int:interceptors>
+					
+		</int:interceptors>
+	</int:channel>
+
+
+	<int:recipient-list-router input-channel="channel11"
+		id="recipientListRounter" apply-sequence="true">
+		
+		
+		
+		
+		
+		<int:recipient channel="channel40" />
+		
+		<int:recipient channel="logger" />
+		
+		<int:recipient channel="channel30" />
+		<int:recipient channel="channel20" />
+	</int:recipient-list-router>
+	<int:channel id="channel40"></int:channel>
+	
+	
+	<int:transformer input-channel="channel40"
+		output-channel="channel41">
+		<beans:bean class="iaw.pc.runtime.PayrollTransformer" />
+	</int:transformer>
+	
+	
+	<int:channel id="channel41">
+		<int:interceptors>
+			
+		</int:interceptors>
+	</int:channel>
+
+	<int:outbound-channel-adapter channel="channel41" method="pay"
+		ref="payrollSender" id="payrollGateway">
 	</int:outbound-channel-adapter>
 
 
-	<int:outbound-channel-adapter channel="channel22"
-		method="send" ref="mailSender" id="mailGateway">
+	<beans:bean id="payrollSender" class="iaw.pc.runtime.Payroll">
+	</beans:bean>
+	
+	<beans:bean id="smsSender" class="iaw.pc.runtime.Sms">
+	</beans:bean>
+	
+	<!-- gris -->
+	<int:channel id="channel20">
+		<int:interceptors>
+			
+		</int:interceptors>
+	</int:channel>
+
+	
+
+	<int:filter id="noEmailAddress" input-channel="channel20"
+		output-channel="channel21"
+		expression="payload.caller.email != null and !payload.caller.email.equals('')" />
+
+
+	<int:channel id="channel21">
+	</int:channel>
+
+
+	<int:transformer input-channel="channel21"
+		output-channel="channel22">
+		<beans:bean class="iaw.pc.runtime.MailTransformer" />
+	</int:transformer>
+
+	<int:channel id="channel22">
+	</int:channel>
+
+
+	<int:outbound-channel-adapter channel="channel22" method="send"
+		ref="mailSender" id="mailGateway">
 	</int:outbound-channel-adapter>
 
-	<int:outbound-channel-adapter channel="channel32"
-		method="send" ref="smsSender" id="smsGateway">
+
+	<int:channel id="channel30"></int:channel>
+
+	<int:filter id="noNumber" input-channel="channel30"
+		output-channel="channel31"
+		expression="payload.caller.phone != null and !payload.caller.phone.equals('')" />
+
+
+	<int:channel id="channel31">
+	</int:channel>
+
+
+	<int:transformer input-channel="channel31"
+		output-channel="channel32">
+		<beans:bean class="iaw.pc.runtime.SMSTransformer" />
+	</int:transformer>
+
+	<int:channel id="channel32">
+	</int:channel>
+
+
+	<beans:bean id="mailSender" class="iaw.pc.runtime.MailSender">
+	</beans:bean>
+
+	<int:outbound-channel-adapter channel="channel32" method="send"
+		ref="smsSender" id="smsGateway">
 	</int:outbound-channel-adapter>
 
 
